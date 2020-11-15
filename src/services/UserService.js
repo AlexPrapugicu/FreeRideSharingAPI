@@ -50,38 +50,43 @@ exports.createUser = async (
   email,
   phoneNumber,
   password,
-  username = "",
-  address = "",
-  role = "client",
-  cid = "",
-  userScore = 0,
-  image = ""
+  location,
+  role = "client"
 ) => {
-  const hashed = await bcrypt.hash(password, 12);
-  const ID = new mongoose.Types.ObjectId();
-  const jwt_token = this.generateToken(name, ID);
-  const user = new User({
-    _id: ID,
-    name: name,
-    surname: surname,
-    email: email,
-    phoneNumber: phoneNumber,
-    password: hashed,
-    username: username,
-    address: address,
-    role: role,
-    token: jwt_token,
-    cid: cid,
-    userScore: userScore,
-    image: image,
-  });
-  await user.save();
-  return user;
+  try {
+    const hashed = await bcrypt.hash(password, 12);
+    const ID = new mongoose.Types.ObjectId();
+    const jwt_token = this.generateToken(name, ID);
+    const user = new User({
+      _id: ID,
+      name: name,
+      surname: surname,
+      email: email,
+      phoneNumber: phoneNumber,
+      password: hashed,
+      location: location,
+      username: "",
+      address: "",
+      role: role,
+      token: jwt_token,
+      cid: "",
+      userScore: 0,
+      image: "",
+    });
+    await user.save();
+    return user;
+  } catch (error) {
+    throw error;
+  }
 };
 
 exports.getUser = async (query) => {
   try {
     const user = await User.findOne(query).exec();
+    if (!user) {
+      throw new Error("User not found!");
+    }
+    return user;
   } catch (error) {
     throw error;
   }

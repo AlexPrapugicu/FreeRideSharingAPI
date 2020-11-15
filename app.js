@@ -14,18 +14,25 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use(async (req, res, next) => {
+  const romania = {
+    type: "Point",
+    coordinates: [-45.75321, 54.81019],
+    radius: 10,
+  };
   try {
     const user = await UserService.createUser(
-      "alex",
-      "ion",
-      "alex@gmail.com",
+      "andrei",
+      "andrei",
+      "andrei@gmail.com",
       "0745678901",
-      "1234"
+      "1234",
+      romania
     );
+
     res.status(200).json({ message: user });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: error });
+    res.status(500).json({ error: error.message });
   }
 });
 module.exports = app;
