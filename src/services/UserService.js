@@ -78,3 +78,11 @@ exports.createUser = async (
   await user.save();
   return user;
 };
+
+exports.getUser = async (query) => {
+  try {
+    const user = await User.findOne(query).exec();
+  } catch (error) {
+    throw error;
+  }
+};
