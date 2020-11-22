@@ -1,0 +1,10 @@
+/*
+
+    Socket communication between server and device giving once a minute or so 
+    information regarding the location of the user
+
+    used to track user location when on ride
+    used to track driver location on map when user requests a ride 
+    
+
+*/

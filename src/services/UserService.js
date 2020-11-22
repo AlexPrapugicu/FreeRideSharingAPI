@@ -4,6 +4,43 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { use } = require("passport");
 
+// Deal with basic CRUD operations
+// Create
+// READ
+// UPDATE
+// DELETE
+
+/*
+
+  Scenario: 
+
+  User >>>>> 
+
+  User logs in / registers -> create account / login
+  
+  User has a profile to manage -> there's where he updates his info 
+
+  User can delete his own account under some circumstances
+
+  User can recieve emails from us with the help of nodemailer
+
+  User has its own data enncrypted in our database so everything is safe
+
+  User has the option to change his password on a different route of update database 
+  where he should send his current password 
+
+  Admin >>>>>
+
+  Can get all users
+
+  Can delete users
+
+  Can update user info
+
+  Can track users
+
+*/
+
 const getToken = (req) => {
   if (req.headers && req.headers.authorization) {
     return req.headers.authorization;
@@ -44,37 +81,38 @@ exports.generateToken = (name, id) => {
   );
 };
 
-exports.createUser = async (
-  name,
-  surname,
-  email,
-  phoneNumber,
-  password,
-  location,
-  role = "client"
-) => {
+exports.createUser = async (name, surname, email, password) => {
   try {
     const hashed = await bcrypt.hash(password, 12);
-    const ID = new mongoose.Types.ObjectId();
-    const jwt_token = this.generateToken(name, ID);
     const user = new User({
-      _id: ID,
+      _id: mongoose.Types.ObjectId(),
       name: name,
       surname: surname,
       email: email,
-      phoneNumber: phoneNumber,
+      phoneNumber: "0220000000",
       password: hashed,
-      location: location,
+      location: null,
       username: "",
       address: "",
-      role: role,
-      token: jwt_token,
+      role: "client",
+      token: "",
       cid: "",
       userScore: 0,
       image: "",
     });
+    const jwt_token = this.generateToken(name, user._id);
+    user.token = jwt_token;
+
     await user.save();
     return user;
+  } catch (error) {
+    throw error;
+  }
+};
+exports.getAllUsers = async () => {
+  try {
+    const users = await User.find().exec();
+    return users;
   } catch (error) {
     throw error;
   }
@@ -91,3 +129,7 @@ exports.getUser = async (query) => {
     throw error;
   }
 };
+
+exports.updateUser = async () => {};
+exports.deleteUser = async () => {};
+exports.getUserLocation = async () => {};

@@ -12,7 +12,7 @@ const userSchema = mongoose.Schema({
   name: { type: String, required: true },
   surname: { type: String, required: true },
   email: { type: String, required: true, validate: emailValidator },
-  phoneNumber: { type: String, required: true, validate: phoneValidator },
+  phoneNumber: { type: String, validate: phoneValidator },
   password: { type: String, required: true },
   username: { type: String },
   address: { type: String },
@@ -23,10 +23,9 @@ const userSchema = mongoose.Schema({
   image: { type: String },
   location: {
     type: pointSchema,
-    required: true,
   },
 });
-
+userSchema.index({ location: "2dsphere" });
 userSchema.query.byName = function (name) {
   return this.findOne({ name: name });
 };
