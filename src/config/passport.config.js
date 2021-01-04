@@ -1,40 +1,122 @@
 const passport = require("passport");
+const GoogleTokenStrategy = require("passport-google-plus-token");
 const JWTStrategy = require("passport-jwt").Strategy;
 const LocalStrategy = require("passport-local").Strategy;
 const FacebookStrategy = require("passport-facebook");
 const GoogleStrategy = require("passport-google-oauth2");
 const { ExtractJwt } = require("passport-jwt");
 const bcrypt = require("bcrypt");
-
-passport.serializeUser(function (user, done) {
-  /*
-    From the user take just the id (to minimize the cookie size) and just pass the id of the user
-    to the done callback
-    PS: You dont have to do it like this its just usually done like this
-    */
-  done(null, user);
-});
-
-passport.deserializeUser(function (user, done) {
-  /*
-    Instead of user this function usually recives the id 
-    then you use the id to select the user from the db and pass the user obj to the done callback
-    PS: You can later access this data in any routes in: req.user
-    */
-  done(null, user);
-});
+const User = require("../models/user");
+const UserService = require("../services/UserService");
 
 passport.use(
-  new GoogleStrategy(
+  new JWTStrategy(
+    {
+      jwtFromRequest: ExtractJwt.fromHeader("authorization"),
+      secretOrKey: "JWTKEY",
+    },
+    async (payload, done) => {
+      try {
+        // if user doesnt exist -> handle
+        const user = await User.findById(payload.sub);
+        if (!user) {
+          return done(null, false);
+        }
+        //else if exists
+        done(null, user);
+      } catch (error) {
+        done(error, false);
+      }
+    }
+  )
+);
+
+passport.use(
+  new LocalStrategy(
+    {
+      usernameField: "email",
+      passwordField: "password",
+      secretOrKey: "JWTKEY",
+    },
+    async (email, password, done) => {
+      try {
+        const user = await User.findOne({ email: email });
+        if (!user) {
+          return done(null, false);
+        }
+        const matched = await user.isValidPass(password);
+        if (!matched) {
+          console.log("Password didn't match");
+          return done(null, false);
+        }
+        done(null, user);
+      } catch (error) {
+        done(error, false);
+      }
+    }
+  )
+);
+
+passport.use(
+  "google",
+  new GoogleTokenStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
-      passReqToCallback: true,
     },
-    function (req, accessToken, refreshToken, profile, done) {
-      console.log(profile);
-      return done(null, profile);
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        // console.log("profile", profile.displayName, "profile");
+        // console.log("accessToken", accessToken, "accessToken");
+        // console.log("\refreshToken", refreshToken, "\refreshToken");
+
+        // Should check :
+        // user has already registered with google (google only or linked google account -> return that user )
+        const existingGoogleUser = await User.findOne({
+          "google.id": profile.id,
+        });
+        if (existingGoogleUser) {
+          // console.log(existingGoogleUser);
+          return done(null, existingGoogleUser);
+        }
+        // user has not linked google account -> check if we have a user with this email in the database like
+        // jonDoe@gmail.com already is in our database as local -> link his account aka findOneAndUpdate google fields
+        const sameEmailUser = await User.findOne({ email: profile.email });
+        if (sameEmailUser) {
+          const updatedSameEmailUser = await User.findOneAndUpdate(
+            { email: profile.email },
+            {
+              $set: {
+                method: "google",
+                "google.id": profile.id,
+                "google.email": profile.emails[0].value,
+                "google.token": accessToken,
+              },
+            },
+            { new: true }
+          );
+          // console.log(updatedSameEmailUser);
+          return done(null, updatedSameEmailUser);
+        }
+
+        const newUser = await UserService.createUser(
+          profile.name.familyName,
+          profile.name.givenName,
+          profile.emails[0].value,
+          process.env.BASE_PASSWORD,
+          "google", // method
+          null, // facebook
+          {
+            id: profile.id,
+            email: profile.emails[0].value,
+            token: accessToken,
+          }
+        );
+        // console.log(newUser);
+        return done(null, newUser);
+      } catch (error) {
+        done(error, false, error.message);
+      }
     }
   )
 );

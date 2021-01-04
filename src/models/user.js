@@ -7,24 +7,47 @@ const {
   phoneValidator,
 } = require("../validators/user/userValidator");
 
-const userSchema = mongoose.Schema({
-  _id: mongoose.Schema.Types.ObjectId,
-  name: { type: String, required: true },
-  surname: { type: String, required: true },
-  email: { type: String, required: true, validate: emailValidator },
-  phoneNumber: { type: String, validate: phoneValidator },
-  password: { type: String, required: true },
-  username: { type: String },
-  address: { type: String },
-  role: { type: String, default: "client", enum: ["driver", "client"] },
-  token: { type: String },
-  cid: { type: String },
-  userScore: { type: Number },
-  image: { type: String },
-  location: {
-    type: pointSchema,
+const userSchema = mongoose.Schema(
+  {
+    _id: mongoose.Schema.Types.ObjectId,
+    name: { type: String, required: true }, // all google facebook local have these
+    surname: { type: String, required: true }, // all google facebook local have these
+    email: { type: String, required: true, validate: emailValidator }, // all google facebook local have these
+    phoneNumber: { type: String, validate: phoneValidator },
+    password: { type: String, required: true }, // will fail if login/register with social => default password to : 1Lollipop when facebook/google auth
+    username: { type: String },
+    address: { type: String },
+    emailVerified: { type: Boolean },
+    active: { type: Boolean },
+    role: { type: String, default: "client", enum: ["driver", "client"] },
+    token: { type: String }, // jwt / facebook / google
+    cid: { type: String }, // identity card id
+    userScore: { type: Number },
+    image: { type: String },
+    car: [{ type: mongoose.Schema.Types.ObjectId, ref: "car" }],
+    age: { type: Number },
+    location: {
+      type: pointSchema,
+    },
+    method: {
+      type: String,
+      enum: ["local", "google", "facebook"],
+      required: true,
+    }, // sets when logs/registers to further check if any more info is requried to do an action
+    facebook: {
+      id: String,
+      token: String,
+      email: String,
+      name: String,
+    },
+    google: {
+      id: String,
+      token: String,
+      email: String,
+    },
   },
-});
+  { timestamps: true }
+);
 userSchema.index({ location: "2dsphere" });
 userSchema.query.byName = function (name) {
   return this.findOne({ name: name });
@@ -60,7 +83,7 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-userSchema.methods.isValidPass = async (password) => {
+userSchema.methods.isValidPass = async function (password) {
   try {
     return await bcrypt.compare(password, this.password);
   } catch (error) {

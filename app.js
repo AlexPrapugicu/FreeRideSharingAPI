@@ -1,6 +1,5 @@
 const express = require("express");
 const passport = require("passport");
-// const cookieSession = require("cookie-session");
 const app = express();
 require("dotenv").config();
 const cors = require("cors");
@@ -8,20 +7,16 @@ const morgan = require("morgan");
 const bodyParser = require("body-parser");
 const connectToDatabase = require("./src/config/database.config");
 const UserRoutes = require("./src/routes/userRoutes");
+const { Mongoose } = require("mongoose");
 
 connectToDatabase();
+Mongoose.promise = global.Promise;
 app.use(morgan("dev"));
 app.use(cors());
-app.use(passport.initialize());
-
-// app.use(
-//   cookieSession({
-//     name: "carRideSharing-session",
-//     keys: ["key1", "key2"],
-//   })
-// );
+// app.use(passport.initialize());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use("/uploads", express.static("uploads"));
 
 app.use("/api/users", UserRoutes);
 

@@ -9,6 +9,7 @@ const rideSchema = mongoose.Schema({
   destination: { type: String, default: "" },
   departureTime: { type: Date, default: Date.now },
   arrivalTime: { type: Date, default: "" },
+  preferences: [{ type: String, default: "" }],
   status: {
     type: String,
     default: "pending",

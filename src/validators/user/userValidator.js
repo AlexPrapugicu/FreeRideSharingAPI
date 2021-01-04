@@ -8,6 +8,7 @@ const emailValidator = (email) => {
 };
 
 const phoneValidator = (phoneNr) => {
+  if (phoneNr === "unset") return true; // bybasses validator if account with unset phone no
   if (phoneNr && phoneNr.match(phoneRegex)) {
     return true;
   }

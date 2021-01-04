@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { use } = require("passport");
 
 // Deal with basic CRUD operations
 // Create
@@ -81,7 +80,17 @@ exports.generateToken = (name, id) => {
   );
 };
 
-exports.createUser = async (name, surname, email, password) => {
+exports.createUser = async (
+  name,
+  surname,
+  email,
+  password,
+  age,
+  role = "client",
+  method = "local",
+  facebook = null,
+  google = null
+) => {
   try {
     const hashed = await bcrypt.hash(password, 12);
     const user = new User({
@@ -89,16 +98,24 @@ exports.createUser = async (name, surname, email, password) => {
       name: name,
       surname: surname,
       email: email,
-      phoneNumber: "0220000000",
+      phoneNumber: "unset",
       password: hashed,
-      location: null,
-      username: "",
-      address: "",
-      role: "client",
-      token: "",
-      cid: "",
+      username: "unset",
+      address: "unset",
+      emailVerified: false,
+      active: false,
+      role: role,
+      token: "unset",
+      cid: "unset",
       userScore: 0,
-      image: "",
+      image:
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/User_font_awesome.svg/1200px-User_font_awesome.svg.png",
+      car: [],
+      age: age,
+      location: null,
+      method: method,
+      facebook: facebook,
+      google: google,
     });
     const jwt_token = this.generateToken(name, user._id);
     user.token = jwt_token;
@@ -120,7 +137,9 @@ exports.getAllUsers = async () => {
 
 exports.getUser = async (query) => {
   try {
-    const user = await User.findOne(query).exec();
+    const user = await User.findOne(query)
+      .populate("car", "id owner model year plate fuel color")
+      .exec();
     if (!user) {
       throw new Error("User not found!");
     }
@@ -130,6 +149,31 @@ exports.getUser = async (query) => {
   }
 };
 
-exports.updateUser = async () => {};
+exports.updatetoken = async (query) => {
+  // the query is the user's email
+  try {
+    const user = await User.findOne(query)
+      .populate("car", "id owner model year plate fuel color")
+      .exec();
+    const newToken = this.generateToken(user.name, user._id);
+    const response = await User.findOneAndUpdate(
+      { _id: user._id },
+      { $set: { token: newToken } },
+      { new: true }
+    ).populate("car", "id owner model year plate fuel color");
+    return response;
+  } catch (error) {}
+};
+
+exports.updateUser = async (query, method) => {
+  try {
+    const updatedUser = await User.findOneAndUpdate(query, method, {
+      new: true,
+    }).populate("car");
+    return updatedUser;
+  } catch (error) {
+    throw error;
+  }
+};
 exports.deleteUser = async () => {};
 exports.getUserLocation = async () => {};
