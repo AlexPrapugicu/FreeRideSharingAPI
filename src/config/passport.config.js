@@ -61,8 +61,9 @@ passport.use(
   "google",
   new GoogleTokenStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientID:
+        "724721538887-4tqqu43r35sn99bajs4a9kl01p7e17th.apps.googleusercontent.com",
+      clientSecret: "5EC3lDmnGAjciCJkK88aGEty",
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -103,7 +104,7 @@ passport.use(
           profile.name.familyName,
           profile.name.givenName,
           profile.emails[0].value,
-          process.env.BASE_PASSWORD,
+          "1Lollipop",
           "google", // method
           null, // facebook
           {

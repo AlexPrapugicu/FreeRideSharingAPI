@@ -76,7 +76,7 @@ exports.generateToken = (name, id) => {
       iat: new Date().getTime(),
       exp: new Date().setDate(new Date().getTime() + 24 * hour),
     },
-    process.env.JWT_SECRET
+    "myFancySecret404"
   );
 };
 
