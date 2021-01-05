@@ -3,7 +3,7 @@ applications:
     name: freeridesharingappproject
     random-route: true
     environment_json: {}
-    memory: 256M
+    memory: 64M
     instances: 1
     disk_quota: 1024M
     services: []
